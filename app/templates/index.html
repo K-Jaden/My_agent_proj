@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>자소서.AI | 나만의 AI 합격 자소서 에이전트</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+                    <span class="logo-text">자소서<span>.AI</span></span>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary btn-block btn-new-session" id="btn-new-session">
+                <i class="fa-solid fa-plus"></i> 새 자소서 작성
+            </button>
+            
+            <div class="session-list-container">
+                <h3>작성 히스토리</h3>
+                <ul class="session-list" id="session-list">
+                    <!-- Dynamic sessions list -->
+                </ul>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="api-key-indicator" id="api-status">
+                    <span class="indicator-dot"></span>
+                    <span id="api-status-text">Gemini API 대기 중</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Session Setup Overlay / Welcome Screen -->
+            <div class="welcome-screen card" id="welcome-screen">
+                <div class="welcome-content">
+                    <div class="icon-wrapper">
+                        <i class="fa-solid fa-rocket"></i>
+                    </div>
+                    <h2>나만의 자소서 에이전트에 오신 것을 환영합니다</h2>
+                    <p>지원하려는 기업과 직무를 입력하여 자소서 에이전트 세션을 시작해 보세요.</p>
+                    
+                    <form id="new-session-form" class="session-form">
+                        <div class="form-group">
+                            <label for="company-input">지원 기업명</label>
+                            <input type="text" id="company-input" placeholder="예: 구글 코리아, 삼성전자" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="job-input">지원 직무</label>
+                            <input type="text" id="job-input" placeholder="예: 소프트웨어 엔지니어, 서비스 기획자" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg">에이전트 시작하기</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Editor / Agent Workflow Panel -->
+            <div class="agent-panel d-none" id="agent-panel">
+                <!-- Top Navigation & Session Info -->
+                <header class="panel-header">
+                    <div class="session-info">
+                        <h1 id="active-session-title">기업명 · 직무</h1>
+                        <span class="badge" id="active-session-badge">Session: ACTIVE</span>
+                    </div>
+                    <div class="session-actions">
+                        <button class="btn btn-outline btn-sm text-danger" id="btn-delete-active-session">
+                            <i class="fa-solid fa-trash-can"></i> 세션 삭제
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Workflow Progress Bar -->
+                <div class="workflow-stepper card">
+                    <div class="stepper-track"></div>
+                    <div class="step active" data-step="1">
+                        <div class="step-icon"><i class="fa-solid fa-user-tag"></i></div>
+                        <span class="step-label">1. 경험 정리</span>
+                    </div>
+                    <div class="step" data-step="2">
+                        <div class="step-icon"><i class="fa-solid fa-file-invoice"></i></div>
+                        <span class="step-label">2. 문항 분석</span>
+                    </div>
+                    <div class="step" data-step="3">
+                        <div class="step-icon"><i class="fa-solid fa-pen-fancy"></i></div>
+                        <span class="step-label">3. 초안 작성</span>
+                    </div>
+                    <div class="step" data-step="4">
+                        <div class="step-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+                        <span class="step-label">4. AI 첨삭</span>
+                    </div>
+                </div>
+
+                <!-- Step Contents -->
+                <div class="step-contents-container">
+                    
+                    <!-- STEP 1: Experience structuring -->
+                    <section class="step-section" id="step-1-section">
+                        <div class="section-header">
+                            <h2><span class="step-num">Step 1</span> 본인의 경험 및 이력 정리</h2>
+                            <p>작성하고 싶은 프로젝트 경험, 프로젝트 요약, 혹은 기존 이력서 내용을 적어주세요. 파일 업로드도 가능합니다.</p>
+                        </div>
+                        <div class="grid grid-2col">
+                            <div class="card editor-card">
+                                <div class="card-header">
+                                    <h3>경험 데이터 입력</h3>
+                                </div>
+                                <div class="card-body">
+                                    <form id="experience-form">
+                                        <div class="form-group">
+                                            <textarea id="raw-experience-input" rows="12" placeholder="자소서에 녹여내고 싶은 경험이나 일화, 성과 등을 줄글 또는 메모 형태로 자유롭게 적어주세요.&#10;예) 2025년 OOO 프로젝트를 기획하고 프론트엔드 최적화 작업을 하여 첫 페이지 로딩 속도를 40% 개선했음..."></textarea>
+                                        </div>
+                                        <div class="file-upload-zone" id="drop-zone">
+                                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                                            <p>이력서 파일 드래그 & 드롭 또는 클릭하여 업로드</p>
+                                            <span class="file-hint">지원 파일: PDF, TXT, MD (최대 10MB)</span>
+                                            <input type="file" id="file-input" class="d-none" accept=".pdf,.txt,.md">
+                                        </div>
+                                        <div class="upload-file-info d-none" id="file-info-container">
+                                            <span id="file-name"><i class="fa-solid fa-file"></i> resume.pdf</span>
+                                            <button type="button" class="btn-remove-file" id="btn-remove-file"><i class="fa-solid fa-xmark"></i></button>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary btn-block btn-lg mt-3" id="btn-save-exp">
+                                            <i class="fa-solid fa-arrow-right"></i> 경험 등록 및 STAR 구조화
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <div class="card output-card">
+                                <div class="card-header">
+                                    <h3>STAR 구조화 결과 <span class="badge badge-success d-none" id="star-complete-badge">완료</span></h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="empty-state" id="star-empty">
+                                        <i class="fa-solid fa-brain"></i>
+                                        <p>경험을 등록하면 AI 에이전트가 Situation, Task, Action, Result 구조로 체계적으로 요약 및 발굴해 줍니다.</p>
+                                    </div>
+                                    <div class="star-result-content d-none" id="star-result-content">
+                                        <!-- Markdown will render here -->
+                                        <div class="markdown-body" id="star-markdown"></div>
+                                        <button class="btn btn-outline btn-block mt-4" id="btn-next-to-step2">
+                                            다음 단계로 이동 <i class="fa-solid fa-chevron-right"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- STEP 2: JD & Question analysis -->
+                    <section class="step-section d-none" id="step-2-section">
+                        <div class="section-header">
+                            <h2><span class="step-num">Step 2</span> 채용공고(JD) 및 자소서 문항 설정</h2>
+                            <p>작성하려는 문항과 기업의 요구 역량을 매칭하기 위해 채용 공고 내용과 자소서 문항을 기입합니다.</p>
+                        </div>
+                        <div class="grid grid-2col">
+                            <div class="card editor-card">
+                                <div class="card-header">
+                                    <h3>요구 조건 기입</h3>
+                                </div>
+                                <div class="card-body">
+                                    <form id="analysis-form">
+                                        <div class="form-group">
+                                            <label for="jd-input">채용 공고 (Job Description)</label>
+                                            <textarea id="jd-input" rows="5" placeholder="우대사항, 자격요건, 인재상, 직무 소개 등 채용공고의 텍스트를 기입해 주세요." required></textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="question-input">자소서 질문 문항</label>
+                                            <textarea id="question-input" rows="3" placeholder="예) 지원 직무에 관한 본인의 핵심 역량과 이를 입증할 수 있는 경험을 서술하시오." required></textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="max-chars-input">글자 수 제한 (공백 포함)</label>
+                                            <input type="number" id="max-chars-input" value="500" min="100" max="3000" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary btn-block btn-lg mt-3" id="btn-analyze-jd">
+                                            <i class="fa-solid fa-magnifying-glass"></i> 공고 & 문항 분석 시작
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <div class="card output-card">
+                                <div class="card-header">
+                                    <h3>AI 분석 리포트 <span class="badge badge-success d-none" id="analysis-complete-badge">완료</span></h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="empty-state" id="analysis-empty">
+                                        <i class="fa-solid fa-chart-line"></i>
+                                        <p>공고와 문항을 등록하면 출제 의도, 필요 역량 키워드 및 작성 핵심 팁을 추출합니다.</p>
+                                    </div>
+                                    <div class="analysis-result-content d-none" id="analysis-result-content">
+                                        <div class="analysis-block">
+                                            <h4><i class="fa-solid fa-compass"></i> 출제 의도 분석</h4>
+                                            <p id="analysis-intent" class="intent-text"></p>
+                                        </div>
+                                        <div class="analysis-block">
+                                            <h4><i class="fa-solid fa-key"></i> 핵심 역량 키워드</h4>
+                                            <div class="tags" id="analysis-competencies"></div>
+                                        </div>
+                                        <div class="analysis-block">
+                                            <h4><i class="fa-solid fa-tags"></i> 추천 포함 키워드 (JD 기반)</h4>
+                                            <div class="tags tags-purple" id="analysis-keywords"></div>
+                                        </div>
+                                        <div class="analysis-block">
+                                            <h4><i class="fa-solid fa-lightbulb"></i> 자소서 작성 꿀팁</h4>
+                                            <ul class="tips-list" id="analysis-tips"></ul>
+                                        </div>
+                                        <button class="btn btn-outline btn-block mt-4" id="btn-next-to-step3">
+                                            다음 단계로 이동 <i class="fa-solid fa-chevron-right"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- STEP 3: Draft generation -->
+                    <section class="step-section d-none" id="step-3-section">
+                        <div class="section-header">
+                            <h2><span class="step-num">Step 3</span> AI 자소서 초안 생성</h2>
+                            <p>구조화된 STAR 경험과 문항 분석 전략을 바탕으로 완결성 있는 자소서 초안을 자동 생성합니다.</p>
+                        </div>
+                        <div class="card single-card">
+                            <div class="card-header">
+                                <h3>생성된 자소서 초안</h3>
+                                <div class="actions">
+                                    <span class="char-counter" id="draft-char-counter">0자 / 500자</span>
+                                    <button class="btn btn-outline btn-sm d-none" id="btn-copy-draft">
+                                        <i class="fa-solid fa-copy"></i> 복사하기
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body flex-column align-center justify-center min-h-300">
+                                <div class="empty-state" id="draft-empty">
+                                    <i class="fa-solid fa-pen-nib"></i>
+                                    <p>아래 버튼을 눌러 초안 생성을 시작하세요. 설정하신 글자 수 제한에 맞춰 작성됩니다.</p>
+                                    <button class="btn btn-primary btn-lg mt-3" id="btn-generate-draft">
+                                        <i class="fa-solid fa-wand-magic-sparkles"></i> AI 초안 생성 시작
+                                    </button>
+                                </div>
+                                <div class="draft-result-content d-none" id="draft-result-content">
+                                    <textarea id="draft-textarea" readonly></textarea>
+                                    <div class="button-group mt-4">
+                                        <button class="btn btn-outline" id="btn-regenerate-draft">
+                                            <i class="fa-solid fa-rotate"></i> 다시 생성하기
+                                        </button>
+                                        <button class="btn btn-primary" id="btn-next-to-step4">
+                                            AI 심층 첨삭 받기 <i class="fa-solid fa-chevron-right"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- STEP 4: AI Review & Refine -->
+                    <section class="step-section d-none" id="step-4-section">
+                        <div class="section-header">
+                            <h2><span class="step-num">Step 4</span> AI 수석 평가관 첨삭 및 교정</h2>
+                            <p>가독성, 논리성, 직무적합도 점수를 매기고 구체적인 피드백과 함께 완성도를 대폭 올린 개선안을 확인하세요.</p>
+                        </div>
+                        
+                        <!-- AI Scores & Comments -->
+                        <div class="grid grid-3col mb-4">
+                            <div class="card score-card">
+                                <div class="score-ring-container">
+                                    <div class="score-ring" id="ring-readability">0</div>
+                                </div>
+                                <h3>가독성 (Readability)</h3>
+                                <p class="score-desc">비문 여부, 문장의 길이 및 호흡의 자연스러움</p>
+                            </div>
+                            <div class="card score-card">
+                                <div class="score-ring-container">
+                                    <div class="score-ring" id="ring-logic">0</div>
+                                </div>
+                                <h3>논리성 (Logic)</h3>
+                                <p class="score-desc">STAR 구조 전개의 명확함 및 인과관계 매끄러움</p>
+                            </div>
+                            <div class="card score-card">
+                                <div class="score-ring-container">
+                                    <div class="score-ring" id="ring-job-fit">0</div>
+                                </div>
+                                <h3>직무 적합도 (Job Fit)</h3>
+                                <p class="score-desc">공고 요구사항 및 핵심 역량 단어 유기적 결합</p>
+                            </div>
+                        </div>
+
+                        <div class="card mb-4 feedback-comments-card d-none" id="feedback-comments-card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-comments"></i> AI 수석 평가관 코멘트</h3>
+                            </div>
+                            <div class="card-body">
+                                <ul class="comments-list" id="feedback-comments-list">
+                                    <!-- Dynamic comments -->
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Side-by-Side Comparison -->
+                        <div class="grid grid-2col">
+                            <div class="card comparison-card original">
+                                <div class="card-header">
+                                    <h3>기존 초안</h3>
+                                    <span class="char-counter" id="original-char-counter">0자</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="text-comparison-box" id="original-comparison-box"></div>
+                                </div>
+                            </div>
+                            <div class="card comparison-card refined">
+                                <div class="card-header">
+                                    <h3>첨삭 개선안 <span class="badge badge-success">추천</span></h3>
+                                    <span class="char-counter" id="refined-char-counter">0자</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="text-comparison-box" id="refined-comparison-box"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="action-footer mt-4 text-center">
+                            <button class="btn btn-lg btn-outline mr-3" id="btn-review-again">
+                                <i class="fa-solid fa-rotate"></i> 첨삭 다시 받기
+                            </button>
+                            <button class="btn btn-lg btn-primary" id="btn-apply-refined">
+                                <i class="fa-solid fa-circle-check"></i> 개선안 최종 채택하기
+                            </button>
+                        </div>
+                    </section>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Spinner / Loading Overlay -->
+    <div class="loading-overlay d-none" id="loading-overlay">
+        <div class="spinner-container">
+            <div class="spinner">
+                <div class="double-bounce1"></div>
+                <div class="double-bounce2"></div>
+            </div>
+            <p id="loading-text">에이전트가 열심히 답변을 분석하고 있습니다...</p>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="loading-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simple Toast Notification -->
+    <div class="toast" id="toast">알림 메시지</div>
+
+    <!-- Marked JS Library (for rendering markdown output in STAR structured experience) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Custom JS -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
