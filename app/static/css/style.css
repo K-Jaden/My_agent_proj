@@ -36,7 +36,7 @@ body {
     background-color: var(--bg-main);
     color: var(--text-primary);
     font-family: var(--font-sans);
-    overflow-hidden: hidden;
+    overflow: hidden;
     height: 100vh;
     display: flex;
     background-image: 
@@ -209,7 +209,7 @@ body {
 .main-content {
     flex: 1;
     overflow-y: auto;
-    padding: 40px;
+    padding: 30px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -247,13 +247,20 @@ body {
     grid-template-columns: 1fr 1fr 1fr;
 }
 
+.grid-3col-large {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 24px;
+    width: 100%;
+}
+
 @media (max-width: 1024px) {
-    .grid-2col, .grid-3col {
+    .grid-2col, .grid-3col, .grid-3col-large {
         grid-template-columns: 1fr;
     }
 }
 
-/* Welcome / Setup Screen */
+/* Welcome Screen */
 .welcome-screen {
     max-width: 600px;
     margin: auto;
@@ -294,9 +301,18 @@ body {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     text-align: left;
     width: 100%;
+}
+
+.input-with-btn {
+    display: flex;
+    gap: 8px;
+}
+
+.input-with-btn input {
+    flex: 1;
 }
 
 label {
@@ -418,7 +434,7 @@ textarea {
     border-color: rgba(20, 184, 166, 0.3);
 }
 
-/* Workflow Stepper */
+/* Stepper (5 steps) */
 .workflow-stepper {
     display: flex;
     justify-content: space-between;
@@ -486,6 +502,173 @@ textarea {
 
 .step.completed .step-label {
     color: var(--secondary-color);
+}
+
+/* GoYong Open Recruitment Table */
+.goyong-recruitments-card {
+    padding: 0;
+    overflow: hidden;
+}
+
+.goyong-recruitments-card .card-header {
+    padding: 16px 24px;
+    margin-bottom: 0;
+}
+
+.table-container {
+    width: 100%;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.goyong-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 13px;
+}
+
+.goyong-table th, .goyong-table td {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.goyong-table th {
+    background: rgba(255, 255, 255, 0.01);
+    color: var(--text-secondary);
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+
+.goyong-table tbody tr {
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.goyong-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.goyong-table tbody tr.selected {
+    background: rgba(99, 102, 241, 0.1);
+    color: #818cf8;
+}
+
+/* Chat UI Styles */
+.chat-card {
+    height: 600px;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+.chat-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-title {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.chat-progress {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.chat-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.chat-bubble {
+    max-width: 75%;
+    padding: 14px 18px;
+    border-radius: 16px;
+    line-height: 1.6;
+    font-size: 13.5px;
+    word-break: break-all;
+}
+
+.chat-bubble.ai {
+    background: rgba(255, 255, 255, 0.04);
+    align-self: flex-start;
+    border-bottom-left-radius: 2px;
+    border: 1px solid var(--border-color);
+}
+
+.chat-bubble.user {
+    background: var(--primary-gradient);
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 2px;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
+}
+
+.chat-hint-container {
+    padding: 12px 24px;
+    border-top: 1px solid var(--border-color);
+}
+
+.chat-hint-box {
+    background: rgba(168, 85, 247, 0.08);
+    border: 1px dashed rgba(168, 85, 247, 0.4);
+    border-radius: 8px;
+    padding: 10px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.hint-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #c084fc;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#chat-hint-text {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.chat-input-area {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-color);
+}
+
+.chat-input-area form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.chat-input-area textarea {
+    height: 70px;
+    resize: none;
+}
+
+.chat-input-area button {
+    align-self: flex-end;
+}
+
+/* Company Guide Panel */
+.company-summary-card {
+    height: 600px;
+    overflow-y: auto;
 }
 
 /* File Upload Zone */
@@ -578,37 +761,11 @@ textarea {
     line-height: 1.6;
 }
 
-/* Markdown and Text Content */
-.markdown-body {
-    font-size: 14px;
-    line-height: 1.7;
-    color: var(--text-secondary);
-}
-
-.markdown-body h2, .markdown-body h3 {
-    color: var(--text-primary);
-    margin-top: 24px;
-    margin-bottom: 12px;
-    font-weight: 600;
-}
-
-.markdown-body h2 { font-size: 18px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; }
-.markdown-body h3 { font-size: 15px; }
-
-.markdown-body ul, .markdown-body ol {
-    padding-left: 20px;
-    margin-bottom: 16px;
-}
-
-.markdown-body li {
-    margin-bottom: 6px;
-}
-
-/* Step 2 JD Analysis */
+/* JD Analysis & Tips */
 .analysis-block {
-    margin-bottom: 24px;
+    margin-bottom: 20px;
     border-bottom: 1px solid var(--border-color);
-    padding-bottom: 16px;
+    padding-bottom: 12px;
 }
 
 .analysis-block:last-child {
@@ -624,7 +781,7 @@ textarea {
     font-size: 14px;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 12px;
+    margin-bottom: 8px;
 }
 
 .analysis-block h4 i {
@@ -632,31 +789,13 @@ textarea {
 }
 
 .intent-text {
-    font-size: 13.5px;
+    font-size: 13px;
     line-height: 1.6;
     color: var(--text-secondary);
 }
 
-.tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.tags .tag-badge {
-    background: rgba(20, 184, 166, 0.1);
-    color: #2dd4bf;
-    border: 1px solid rgba(20, 184, 166, 0.2);
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.tags-purple .tag-badge {
-    background: rgba(168, 85, 247, 0.1);
-    color: #c084fc;
-    border: 1px solid rgba(168, 85, 247, 0.2);
+.text-accent {
+    color: #818cf8 !important;
 }
 
 .tips-list {
@@ -684,7 +823,7 @@ textarea {
     top: -2px;
 }
 
-/* Step 3 Draft Textarea */
+/* Draft Textarea */
 .single-card {
     max-width: 800px;
     margin: 0 auto;
@@ -723,7 +862,7 @@ textarea {
     color: var(--text-muted);
 }
 
-/* Step 4 Review & Feedback UI */
+/* Step 5 Review & Feedback UI */
 .score-card {
     text-align: center;
     padding: 24px;
@@ -926,9 +1065,111 @@ textarea {
 .mt-4 { margin-top: 16px; }
 .mb-4 { margin-bottom: 16px; }
 .mr-3 { margin-right: 12px; }
-.min-h-300 { min-h: 300px; }
 .text-center { text-align: center; }
 .text-danger { color: var(--danger-color) !important; }
 .flex-column { flex-direction: column; }
 .align-center { align-items: center; }
 .justify-center { justify-content: center; }
+
+/* AI Recommendation Cards */
+.ai-recommendation-card {
+    border-color: rgba(138, 75, 243, 0.25) !important;
+    background: linear-gradient(180deg, rgba(138, 75, 243, 0.01) 0%, rgba(255, 255, 255, 0.01) 100%) !important;
+    box-shadow: 0 8px 32px rgba(138, 75, 243, 0.04);
+}
+
+.recommendation-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 10px;
+}
+
+.rec-job-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    position: relative;
+    overflow: hidden;
+    min-height: 180px;
+}
+
+.rec-job-card:hover {
+    border-color: var(--primary-color);
+    background: rgba(99, 102, 241, 0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.1);
+}
+
+.rec-job-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--primary-gradient);
+    opacity: 0.8;
+}
+
+.rec-job-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 8px;
+}
+
+.rec-company-tag {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--secondary-color);
+    background: rgba(20, 184, 166, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+}
+
+.rec-job-type {
+    font-size: 11px;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.rec-job-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    height: 38px;
+}
+
+.rec-reason {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    background: rgba(0, 0, 0, 0.15);
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-top: auto;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+}
+

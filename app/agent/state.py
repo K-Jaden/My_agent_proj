@@ -7,6 +7,13 @@ class AgentState(TypedDict):
     question_text: str
     max_chars: int
     
+    # Company insights (New)
+    company_insights: Optional[Dict[str, Any]]
+    
+    # Interview state (New)
+    interview_turns: Optional[List[Dict[str, Any]]] # [{"turn": 1, "q": "...", "hint": "...", "a": "..."}]
+    current_turn: Optional[int]
+    
     # Outputs/Intermediates
     star_experience: Optional[str]
     jd_analysis: Optional[Dict[str, Any]]
