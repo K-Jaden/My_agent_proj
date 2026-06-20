@@ -49,22 +49,11 @@
             <div class="welcome-screen card" id="welcome-screen">
                 <div class="welcome-content">
                     <div class="icon-wrapper">
-                        <i class="fa-solid fa-rocket"></i>
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
                     </div>
                     <h2>나만의 자소서 에이전트에 오신 것을 환영합니다</h2>
-                    <p>지원하려는 기업과 직무를 입력하여 자소서 에이전트 세션을 시작해 보세요.</p>
-                    
-                    <form id="new-session-form" class="session-form">
-                        <div class="form-group">
-                            <label for="company-input">지원 기업명</label>
-                            <input type="text" id="company-input" placeholder="예: 구글 코리아, 삼성전자" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="job-input">지원 직무</label>
-                            <input type="text" id="job-input" placeholder="예: 소프트웨어 엔지니어, 서비스 기획자" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-lg">에이전트 시작하기</button>
-                    </form>
+                    <p>인공지능 에이전트와 함께 서류 합격 확률을 극대화하는 맞춤형 자소서를 완성해 보세요.</p>
+                    <button type="button" class="btn btn-primary btn-lg" id="btn-start-welcome">새 자소서 작성 시작하기</button>
                 </div>
             </div>
 
@@ -211,6 +200,11 @@
                                         </div>
                                         <div class="form-group">
                                             <label for="question-input">자소서 질문 문항</label>
+                                            <div class="preset-questions mb-2" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px;">
+                                                <button type="button" class="btn btn-outline btn-sm preset-btn" data-preset="1"><i class="fa-solid fa-file-signature"></i> 1. 지원동기</button>
+                                                <button type="button" class="btn btn-outline btn-sm preset-btn" data-preset="2"><i class="fa-solid fa-gears"></i> 2. 직무역량</button>
+                                                <button type="button" class="btn btn-outline btn-sm preset-btn" data-preset="3"><i class="fa-solid fa-scale-balanced"></i> 3. 장단점</button>
+                                            </div>
                                             <textarea id="question-input" rows="3" placeholder="예) 우리 회사에 지원하게 된 동기와, 직무를 수행하기 위해 본인이 노력한 경험을 서술하시오." required></textarea>
                                         </div>
                                         <div class="form-group">
@@ -267,7 +261,7 @@
                             <!-- Left Company Guide Panel -->
                             <div class="card company-summary-card">
                                 <div class="card-header">
-                                    <h3 id="chat-company-title">삼성전자 분석 요약</h3>
+                                    <h3 id="chat-company-title">기업 분석 요약 리포트</h3>
                                 </div>
                                 <div class="card-body" id="chat-company-summary-body">
                                     <!-- Brief details -->
@@ -307,7 +301,7 @@
                     <section class="step-section d-none" id="step-4-section">
                         <div class="section-header">
                             <h2><span class="step-num">Step 4</span> 대화 내용 종합 AI 자소서 생성</h2>
-                            <p>등록한 이력서와 3회에 걸친 질의응답 내용을 기반으로 매끄럽고 합격률 높은 최종 자소서를 추출했습니다.</p>
+                            <p>등록한 이력서와 질의응답 내용을 기반으로 매끄럽고 합격률 높은 최종 자소서를 추출했습니다.</p>
                         </div>
                         <div class="card single-card">
                             <div class="card-header">

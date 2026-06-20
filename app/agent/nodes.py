@@ -22,10 +22,18 @@ def get_llm():
         raise ValueError("GEMINI_API_KEY가 설정되지 않았습니다. .env 파일을 확인해 주세요.")
     
     return ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-2.5-flash-lite",
         google_api_key=api_key,
         temperature=0.7
     )
+
+def handle_agent_error(e: Exception) -> str:
+    err_str = str(e)
+    if "leaked" in err_str or "API key was reported as leaked" in err_str:
+        return "Gemini API 키가 유출되어 비활성화되었습니다. 프로젝트 루트의 .env 파일에서 새로운 GEMINI_API_KEY를 설정해 주세요."
+    if "API_KEY_INVALID" in err_str or "API key not valid" in err_str:
+        return "유효하지 않은 Gemini API 키입니다. .env 파일의 GEMINI_API_KEY를 확인해 주세요."
+    return err_str
 
 def parse_json_markdown(text: str) -> dict:
     """Helper to parse JSON from markdown code blocks or raw string."""
@@ -61,7 +69,7 @@ def structure_experience_node(state: AgentState) -> dict:
             "logs": logs
         }
     except Exception as e:
-        error_msg = f"[Stage 1 에러] {str(e)}"
+        error_msg = f"[Stage 1 에러] {handle_agent_error(e)}"
         logs.append(error_msg)
         return {"error": error_msg, "logs": logs}
 
@@ -90,7 +98,7 @@ def analyze_jd_node(state: AgentState) -> dict:
             "logs": logs
         }
     except Exception as e:
-        error_msg = f"[Stage 2 에러] {str(e)}"
+        error_msg = f"[Stage 2 에러] {handle_agent_error(e)}"
         logs.append(error_msg)
         return {"error": error_msg, "logs": logs}
 
@@ -128,6 +136,7 @@ def generate_interview_question_node(state: AgentState) -> dict:
         
         q_text = result_data.get("question", "질문 생성 실패")
         hint_text = result_data.get("hint", "가이드라인이 없습니다.")
+        intent_text = result_data.get("intent", "")
         
         # Build new turn data
         updated_turns = list(interview_turns)
@@ -138,6 +147,7 @@ def generate_interview_question_node(state: AgentState) -> dict:
             "turn": current_turn,
             "q": q_text,
             "hint": hint_text,
+            "intent": intent_text,
             "a": ""
         }
         
@@ -152,7 +162,7 @@ def generate_interview_question_node(state: AgentState) -> dict:
             "logs": logs
         }
     except Exception as e:
-        error_msg = f"[질문 생성 에러] {str(e)}"
+        error_msg = f"[질문 생성 에러] {handle_agent_error(e)}"
         logs.append(error_msg)
         return {"error": error_msg, "logs": logs}
 
@@ -194,7 +204,7 @@ def generate_final_draft_node(state: AgentState) -> dict:
             "logs": logs
         }
     except Exception as e:
-        error_msg = f"[최종 자소서 작성 에러] {str(e)}"
+        error_msg = f"[최종 자소서 작성 에러] {handle_agent_error(e)}"
         logs.append(error_msg)
         return {"error": error_msg, "logs": logs}
 
@@ -238,7 +248,7 @@ def review_draft_node(state: AgentState) -> dict:
             "logs": logs
         }
     except Exception as e:
-        error_msg = f"[첨삭 평가 에러] {str(e)}"
+        error_msg = f"[첨삭 평가 에러] {handle_agent_error(e)}"
         logs.append(error_msg)
         return {"error": error_msg, "logs": logs}
 
@@ -269,14 +279,9 @@ def recommend_jobs_node(user_experience: str, job_listings: list) -> dict:
         }
     except Exception as e:
         print(f"[recommend_jobs_node Exception] {e}")
-        # Return fallback (e.g. recommend first 3 as default if API fails)
-        fallback_seqnos = [job["emp_seqno"] for job in job_listings[:10]]
-        fallback_recs = [
-            {"emp_seqno": job["emp_seqno"], "reason": "이력서 분석에 일시적 지연이 발생하여 기본 맞춤 직무로 추천되었습니다."}
-            for job in job_listings[:3]
-        ]
         return {
-            "matching_seqnos": fallback_seqnos,
-            "recommendations": fallback_recs
+            "error": handle_agent_error(e),
+            "matching_seqnos": [],
+            "recommendations": []
         }
 

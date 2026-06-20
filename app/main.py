@@ -230,6 +230,10 @@ def api_analyze_company(
     insights = fetch_company_insights(company_name)
     update_session_insights(session_id, insights)
     
+    # Update session company info in DB
+    from app.database import update_session_info
+    update_session_info(session_id, company_name, session["job_title"])
+    
     return {"status": "success", "company_insights": insights}
 
 # Match and Recommend Job listings based on experience
@@ -255,7 +259,9 @@ def api_recommend_jobs(session_id: str):
     
     # Run LLM analysis node to get matching_seqnos and recommendations
     result = recommend_jobs_node(user_exp, listings)
-    
+    if "error" in result:
+        raise HTTPException(status_code=500, detail=result["error"])
+        
     matching_seqnos = result.get("matching_seqnos", [])
     recommendations_raw = result.get("recommendations", [])
     
@@ -295,11 +301,16 @@ def api_recommend_jobs(session_id: str):
 def api_step2_analyze(
     session_id: str,
     question_text: str = Form(...),
-    max_chars: int = Form(500)
+    max_chars: int = Form(500),
+    company: str = Form("미정"),
+    job_title: str = Form("미정")
 ):
     session = get_session(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="세션을 찾을 수 없습니다.")
+        
+    from app.database import update_session_info
+    update_session_info(session_id, company, job_title)
         
     # Analyze JD & question core intent (augmented with GoYong24 job description details)
     state = {
@@ -352,27 +363,38 @@ def api_interview_next(session_id: str):
     logs = get_interview_logs(session_id)
     current_turn = len(logs) + 1
     
-    if current_turn > 3:
-        # Check if the third turn is answered
-        if len(logs) == 3 and logs[2].get("user_answer"):
+    if current_turn > 1:
+        # Check if the first turn is answered
+        if len(logs) == 1 and logs[0].get("user_answer"):
             return {"status": "completed", "message": "모든 면접 질문에 답했습니다. 초안을 생성해 주세요."}
-        elif len(logs) == 3:
-            # We are waiting for the third answer
+        elif len(logs) == 1:
+            # We are waiting for the first answer
             return {
                 "status": "waiting",
-                "turn": 3,
-                "question": logs[2]["ai_question"],
-                "hint": logs[2]["ai_hint"]
+                "turn": 1,
+                "question": logs[0]["ai_question"],
+                "hint": logs[0]["ai_hint"]
             }
-        raise HTTPException(status_code=400, detail="이미 3회 대화가 끝났습니다. 다음 단계로 넘어가 주세요.")
+        raise HTTPException(status_code=400, detail="이미 1회 대화가 끝났습니다. 다음 단계로 넘어가 주세요.")
         
+    # Format logs for agent
+    formatted_turns = []
+    for log in logs:
+        formatted_turns.append({
+            "turn": log["turn_num"],
+            "q": log["ai_question"],
+            "hint": log.get("ai_hint"),
+            "intent": log.get("ai_intent"),
+            "a": log.get("user_answer") or ""
+        })
+
     # Compile state for interviewer agent (augmented with GoYong24 job description details)
     state = {
         "raw_experience": raw_exp,
         "company_insights": insights,
         "job_description": get_augmented_job_description(session),
         "question_text": active_question["question_text"],
-        "interview_turns": logs,
+        "interview_turns": formatted_turns,
         "current_turn": current_turn,
         "logs": []
     }
@@ -384,14 +406,15 @@ def api_interview_next(session_id: str):
     # Find the newly generated question
     new_turn = next(t for t in result["interview_turns"] if t["turn"] == current_turn)
     
-    # Save to SQLite
-    save_interview_turn(session_id, current_turn, new_turn["q"], new_turn["hint"])
+    # Save to SQLite (with new intent parameter)
+    save_interview_turn(session_id, current_turn, new_turn["q"], new_turn["hint"], ai_intent=new_turn.get("intent", ""))
     
     return {
         "status": "success",
         "turn": current_turn,
         "question": new_turn["q"],
-        "hint": new_turn["hint"]
+        "hint": new_turn["hint"],
+        "intent": new_turn.get("intent", "")
     }
 
 @app.post("/api/sessions/{session_id}/interview/submit-answer")
@@ -415,7 +438,7 @@ def api_step3_draft(question_id: int):
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT q.*, s.company, s.job_title, s.company_insights, e.raw_content
+        SELECT q.*, s.company, s.job_title, s.emp_seqno, s.company_insights, e.raw_content
         FROM questions q
         JOIN sessions s ON q.session_id = s.id
         LEFT JOIN experiences e ON s.id = e.session_id
@@ -432,8 +455,8 @@ def api_step3_draft(question_id: int):
     
     # Fetch all interview turns
     logs = get_interview_logs(session_id)
-    if len(logs) < 3 or not all(turn.get("user_answer") for turn in logs):
-        raise HTTPException(status_code=400, detail="3회 면접 질문에 모두 답변해야 초안 작성이 가능합니다.")
+    if len(logs) < 1 or not all(turn.get("user_answer") for turn in logs):
+        raise HTTPException(status_code=400, detail="1회 면접 질문에 모두 답변해야 초안 작성이 가능합니다.")
         
     # Parse insights
     insights = {}
@@ -523,12 +546,12 @@ def api_apply_refined(question_id: int):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT refined_draft FROM questions WHERE id = ?", (question_id,))
+        cursor.execute("SELECT refined_content FROM questions WHERE id = ?", (question_id,))
         row = cursor.fetchone()
-        if not row or not row["refined_draft"]:
+        if not row or not row["refined_content"]:
             raise HTTPException(status_code=400, detail="적용할 첨삭 개선안이 존재하지 않습니다.")
             
-        refined = row["refined_draft"]
+        refined = row["refined_content"]
         cursor.execute("UPDATE questions SET draft_content = ? WHERE id = ?", (refined, question_id))
         conn.commit()
     finally:

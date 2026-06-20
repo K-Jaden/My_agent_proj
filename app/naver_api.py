@@ -107,7 +107,7 @@ def analyze_company_with_llm(company_name: str, search_text: str) -> dict:
 """
     try:
         llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
+            model="gemini-1.5-flash",
             google_api_key=api_key,
             temperature=0.3
         )

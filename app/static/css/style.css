@@ -1173,3 +1173,126 @@ textarea {
     border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
+/* UI Enhancements & Fixes */
+
+/* Preset Question Buttons */
+.preset-btn {
+    font-size: 11px !important;
+    padding: 6px 12px !important;
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 20px !important;
+    color: var(--text-secondary) !important;
+    transition: var(--transition-smooth) !important;
+}
+
+.preset-btn:hover {
+    background: rgba(99, 102, 241, 0.15) !important;
+    border-color: var(--primary-color) !important;
+    color: var(--text-primary) !important;
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+}
+
+/* Chat bubble turn and intent guides */
+.chat-bubble-turn {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--secondary-color);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.chat-bubble-intent {
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: rgba(20, 184, 166, 0.05);
+    border: 1px solid rgba(20, 184, 166, 0.15);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    line-height: 1.4;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chat-bubble-intent i {
+    color: var(--secondary-color);
+}
+
+.chat-bubble-text {
+    font-size: 13.5px;
+    line-height: 1.6;
+}
+
+/* Table selection buttons/badges */
+.table-select-badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--secondary-color);
+    background: rgba(20, 184, 166, 0.1);
+    border: 1px solid rgba(20, 184, 166, 0.3);
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: var(--transition-smooth);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.goyong-table tbody tr:hover .table-select-badge {
+    background: var(--secondary-gradient);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 0 8px rgba(20, 184, 166, 0.4);
+}
+
+/* High contrast click indicators for table rows and job cards */
+.goyong-table tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.goyong-table tbody tr:hover {
+    background: rgba(99, 102, 241, 0.06) !important;
+    border-bottom-color: rgba(99, 102, 241, 0.2) !important;
+}
+
+.goyong-table tbody tr.selected {
+    background: rgba(99, 102, 241, 0.15) !important;
+    border-bottom-color: var(--primary-color) !important;
+}
+
+.rec-job-card {
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+}
+
+.rec-job-card:hover {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.25) !important;
+}
+
+.rec-action-badge {
+    transition: var(--transition-smooth);
+}
+
+.rec-job-card:hover .rec-action-badge {
+    color: var(--text-primary) !important;
+    text-shadow: 0 0 8px var(--primary-color);
+}
+
+/* Hide spin buttons for input type number */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+

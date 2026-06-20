@@ -1,0 +1,26 @@
+# Environment variables
+.env
+.env.local
+.env.*
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+
+# Databases
+*.db
+*.sqlite3
+
+# Uploads and temporary files
+uploads/
+scratch/
+.system_generated/
+
+# OS files
+.DS_Store
+Thumbs.db

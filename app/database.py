@@ -77,6 +77,12 @@ def init_db():
         )
     """)
     
+    # Safely alter table to add ai_intent column if it does not exist
+    try:
+        cursor.execute("ALTER TABLE interview_logs ADD COLUMN ai_intent TEXT")
+    except sqlite3.OperationalError:
+        pass # Column already exists
+    
     # Create questions table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS questions (
@@ -278,7 +284,7 @@ def get_experience(session_id):
         conn.close()
 
 # Interview Logs CRUD
-def save_interview_turn(session_id, turn_num, ai_question, ai_hint, user_answer=None):
+def save_interview_turn(session_id, turn_num, ai_question, ai_hint, ai_intent=None, user_answer=None):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
@@ -289,13 +295,13 @@ def save_interview_turn(session_id, turn_num, ai_question, ai_hint, user_answer=
         row = cursor.fetchone()
         if row:
             cursor.execute(
-                "UPDATE interview_logs SET ai_question = ?, ai_hint = ?, user_answer = ? WHERE id = ?",
-                (ai_question, ai_hint, user_answer, row["id"])
+                "UPDATE interview_logs SET ai_question = ?, ai_hint = ?, ai_intent = ?, user_answer = ? WHERE id = ?",
+                (ai_question, ai_hint, ai_intent, user_answer, row["id"])
             )
         else:
             cursor.execute(
-                "INSERT INTO interview_logs (session_id, turn_num, ai_question, ai_hint, user_answer) VALUES (?, ?, ?, ?, ?)",
-                (session_id, turn_num, ai_question, ai_hint, user_answer)
+                "INSERT INTO interview_logs (session_id, turn_num, ai_question, ai_hint, ai_intent, user_answer) VALUES (?, ?, ?, ?, ?, ?)",
+                (session_id, turn_num, ai_question, ai_hint, ai_intent, user_answer)
             )
         conn.commit()
     finally:

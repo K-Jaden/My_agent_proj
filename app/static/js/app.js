@@ -3,6 +3,7 @@ let currentSessionId = null;
 let currentQuestionId = null;
 let currentStep = 1;
 let currentTurn = 1;
+let isFetchingQuestion = false;
 
 // DOM Elements
 const welcomeScreen = document.getElementById('welcome-screen');
@@ -13,6 +14,7 @@ const newSessionForm = document.getElementById('new-session-form');
 const companyInput = document.getElementById('company-input');
 const jobInput = document.getElementById('job-input');
 const activeSessionTitle = document.getElementById('active-session-title');
+const draftTextarea = document.getElementById('draft-textarea');
 const btnDeleteActiveSession = document.getElementById('btn-delete-active-session');
 const apiStatusText = document.getElementById('api-status-text');
 const apiStatusDot = document.querySelector('.api-key-indicator .indicator-dot');
@@ -63,7 +65,7 @@ async function checkApiStatus() {
 /* --- Load Recruitments List --- */
 async function loadRecruitments() {
     const tbody = document.getElementById('goyong-tbody');
-    tbody.innerHTML = '<tr><td colspan="5" class="text-center">공채 목록을 불러오는 중...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center">공채 목록을 불러오는 중...</td></tr>';
     
     try {
         const res = await fetch('/api/goyong/recruitments');
@@ -71,7 +73,7 @@ async function loadRecruitments() {
         
         tbody.innerHTML = '';
         if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center">진행 중인 공채 공고가 없습니다.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">진행 중인 공채 공고가 없습니다.</td></tr>';
             return;
         }
         
@@ -84,6 +86,7 @@ async function loadRecruitments() {
                 <td>${item.job_type}</td>
                 <td>${item.salary}</td>
                 <td>${item.close_date}</td>
+                <td style="text-align: right;"><span class="table-select-badge"><i class="fa-solid fa-circle-check"></i> 선택 및 분석</span></td>
             `;
             
             tr.addEventListener('click', () => {
@@ -147,6 +150,9 @@ async function loadRecommendedJobs(sessionId) {
                     </div>
                     <div class="rec-job-title" title="${rec.title}">${rec.title}</div>
                     <div class="rec-reason">${rec.reason}</div>
+                    <div class="rec-job-card-footer" style="margin-top: 12px; display: flex; justify-content: flex-end; align-items: center; border-top: 1px dashed var(--border-color); padding-top: 8px;">
+                        <span class="rec-action-badge" style="font-size: 11px; font-weight: 600; color: var(--primary-color); display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle-check"></i> 이 공고 선택 및 분석</span>
+                    </div>
                 `;
                 
                 card.addEventListener('click', () => {
@@ -156,11 +162,12 @@ async function loadRecommendedJobs(sessionId) {
                 cardsContainer.appendChild(card);
             });
         } else {
-            container.classList.add('d-none');
+            const errDetail = (data && data.detail) ? data.detail : "추천된 공고가 없습니다.";
+            cardsContainer.innerHTML = `<div style="grid-column: 1/-1; text-align: center; font-size: 13px; color: var(--text-secondary); padding: 20px;"><i class="fa-solid fa-circle-exclamation" style="color: var(--danger-color); margin-right: 4px;"></i> AI 추천 분석 실패: ${errDetail}</div>`;
         }
     } catch (e) {
         console.error("[loadRecommendedJobs Error]", e);
-        container.classList.add('d-none');
+        cardsContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; font-size: 13px; color: var(--text-secondary); padding: 20px;"><i class="fa-solid fa-circle-exclamation" style="color: var(--danger-color); margin-right: 4px;"></i> 네트워크 연결 오류로 맞춤 공고를 추천하지 못했습니다.</div>';
     }
 }
 
@@ -200,47 +207,57 @@ async function triggerCompanyAnalysis(companyName, empSeqno = null) {
     }
 }
 
+async function createNewAutoSession() {
+    showLoading("새 자소서 작성 세션을 만드는 중...", 20);
+    try {
+        const res = await fetch('/api/sessions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ company: '미정', job_title: '미정' })
+        });
+        const data = await res.json();
+        currentSessionId = data.id;
+        
+        await loadSessions();
+        await loadSessionDetails(currentSessionId);
+        
+        welcomeScreen.classList.add('d-none');
+        agentPanel.classList.remove('d-none');
+        showToast("새 자소서 작성 세션이 시작되었습니다!");
+    } catch (error) {
+        showToast("세션 생성 실패");
+    } finally {
+        hideLoading();
+    }
+}
+
 /* --- Event Listeners --- */
 function setupEventListeners() {
-    // New Session
-    btnNewSession.addEventListener('click', () => {
-        welcomeScreen.classList.remove('d-none');
-        agentPanel.classList.add('d-none');
-        currentSessionId = null;
-        currentQuestionId = null;
-        document.querySelectorAll('.session-item').forEach(el => el.classList.remove('active'));
+    // Start welcome button click
+    const btnStartWelcome = document.getElementById('btn-start-welcome');
+    if (btnStartWelcome) {
+        btnStartWelcome.addEventListener('click', createNewAutoSession);
+    }
+
+    // Preset questions click
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const presetId = btn.getAttribute('data-preset');
+            const questionInput = document.getElementById('question-input');
+            if (presetId === '1') {
+                questionInput.value = "우리 회사에 지원하게 된 동기와 입사 후 포부에 대해 기술해 주십시오.";
+            } else if (presetId === '2') {
+                questionInput.value = "지원 직무를 수행하기 위해 본인이 개발한 전문성 및 역량과, 이를 실제 발휘한 경험을 구체적으로 기술해 주십시오.";
+            } else if (presetId === '3') {
+                questionInput.value = "본인의 성격의 장단점을 기술하고, 단점을 극복하기 위해 노력했던 사례를 기술해 주십시오.";
+            }
+            showToast("대표 항목 질문이 자동 입력되었습니다.");
+        });
     });
 
-    // Submit new session
-    newSessionForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const company = companyInput.value.trim();
-        const job = jobInput.value.trim();
-        
-        showLoading("새 자소서 작성 세션을 만드는 중...", 20);
-        try {
-            const res = await fetch('/api/sessions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ company, job_title: job })
-            });
-            const data = await res.json();
-            currentSessionId = data.id;
-            
-            companyInput.value = '';
-            jobInput.value = '';
-            
-            await loadSessions();
-            await loadSessionDetails(currentSessionId);
-            
-            welcomeScreen.classList.add('d-none');
-            agentPanel.classList.remove('d-none');
-            showToast("세션 생성 완료! 이력서를 먼저 등록해 주세요.");
-        } catch (error) {
-            showToast("세션 생성 실패");
-        } finally {
-            hideLoading();
-        }
+    // New Session
+    btnNewSession.addEventListener('click', () => {
+        createNewAutoSession();
     });
 
     // Delete Session
@@ -347,7 +364,7 @@ function setupEventListeners() {
                 showToast("이력서 정보가 성공적으로 등록되었습니다!");
                 navigateToStep(2);
             } else {
-                showToast("이력서 등록 실패");
+                showToast(data.detail || "이력서 등록 실패");
             }
         } catch (error) {
             showToast("네트워크 오류");
@@ -372,6 +389,12 @@ function setupEventListeners() {
     const questionInput = document.getElementById('question-input');
     const maxCharsInput = document.getElementById('max-chars-input');
 
+    if (maxCharsInput) {
+        maxCharsInput.addEventListener('wheel', (e) => {
+            e.preventDefault();
+        });
+    }
+
     analysisForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -380,6 +403,8 @@ function setupEventListeners() {
             const formData = new FormData();
             formData.append("question_text", questionInput.value.trim());
             formData.append("max_chars", maxCharsInput.value);
+            formData.append("company", document.getElementById('company-search-input').value.trim());
+            formData.append("job_title", document.getElementById('job-title-input').value.trim());
             
             const res = await fetch(`/api/sessions/${currentSessionId}/step2_analyze`, {
                 method: 'POST',
@@ -392,14 +417,11 @@ function setupEventListeners() {
                 steps[1].classList.add('completed');
                 showToast("공고 매칭 분석이 완료되었습니다. AI 면접을 시작합니다!");
                 
-                // Clear chat bubbles and initiate interview
+                // Clear chat bubbles and reload session details
                 document.getElementById('chat-messages-container').innerHTML = '';
-                navigateToStep(3);
-                
-                // Initiate first interview question
-                fetchNextInterviewQuestion();
+                await loadSessionDetails(currentSessionId);
             } else {
-                showToast("분석 실패");
+                showToast(data.detail || "분석 실패");
             }
         } catch (error) {
             showToast("네트워크 오류");
@@ -438,7 +460,8 @@ function setupEventListeners() {
                 // Fetch next turn
                 await fetchNextInterviewQuestion();
             } else {
-                showToast("답변 전송에 실패했습니다.");
+                const data = await res.json();
+                showToast(data.detail || "답변 전송에 실패했습니다.");
                 chatAnswerInput.disabled = false;
                 document.getElementById('btn-submit-answer').disabled = false;
             }
@@ -454,7 +477,6 @@ function setupEventListeners() {
     // Step 4 Generate Draft
     const btnGenerateDraft = document.getElementById('btn-generate-draft');
     const btnRegenerateDraft = document.getElementById('btn-regenerate-draft');
-    const draftTextarea = document.getElementById('draft-textarea');
     const btnCopyDraft = document.getElementById('btn-copy-draft');
     const draftCharCounter = document.getElementById('draft-char-counter');
 
@@ -570,8 +592,8 @@ function isStepAccessible(stepNum) {
         return currentQuestionId !== null;
     }
     if (stepNum === 4) {
-        // Interview complete (at least 3 turns in DB)
-        return currentQuestionId !== null; // Allow viewing compilation page
+        // Interview complete (at least 1 turn answered in DB)
+        return steps[2].classList.contains('completed');
     }
     if (stepNum === 5) {
         // Draft created
@@ -583,6 +605,9 @@ function isStepAccessible(stepNum) {
 
 /* --- Interview Chat Manager --- */
 async function fetchNextInterviewQuestion() {
+    if (isFetchingQuestion) return;
+    isFetchingQuestion = true;
+
     const container = document.getElementById('chat-messages-container');
     const hintContainer = document.getElementById('chat-hint-container');
     const hintText = document.getElementById('chat-hint-text');
@@ -594,10 +619,19 @@ async function fetchNextInterviewQuestion() {
         const res = await fetch(`/api/sessions/${currentSessionId}/interview/next`, { method: 'POST' });
         const data = await res.json();
         
+        if (!res.ok) {
+            const errorMsg = data.detail || "면접 질문을 불러오는 데 실패했습니다.";
+            showToast(errorMsg);
+            appendChatBubble(`오류가 발생했습니다: ${errorMsg}\n새로고침을 하거나 대화를 다시 시도해 주세요.`, 'ai');
+            input.disabled = false;
+            submitBtn.disabled = false;
+            return;
+        }
+        
         if (data.status === 'completed') {
-            appendChatBubble("면접 꼬리 질문 3단계가 모두 마쳤습니다! 이제 아래 버튼을 누르거나 다음 단계로 가 자소서를 완성해 보세요.", 'ai');
+            appendChatBubble("면접 꼬리 질문 1단계가 모두 마쳤습니다! 이제 아래 버튼을 누르거나 다음 단계로 가 자소서를 완성해 보세요.", 'ai');
             hintContainer.classList.add('d-none');
-            chatProgress.textContent = "가이드 면접 종료 (3/3 답변)";
+            chatProgress.textContent = "가이드 면접 종료 (1/1 답변)";
             
             // Allow submission or navigation
             input.disabled = true;
@@ -612,10 +646,10 @@ async function fetchNextInterviewQuestion() {
         }
         
         currentTurn = data.turn;
-        chatProgress.textContent = `면접 질문 ${currentTurn} / 3 진행 중`;
+        chatProgress.textContent = `면접 질문 ${currentTurn} / 1 진행 중`;
         
-        // Append AI question
-        appendChatBubble(data.question, 'ai');
+        // Append AI question with intent
+        appendChatBubble(data.question, 'ai', data.intent, currentTurn);
         
         // Show hint
         if (data.hint) {
@@ -632,14 +666,30 @@ async function fetchNextInterviewQuestion() {
         
     } catch (e) {
         showToast("다음 면접 질문 로딩에 실패했습니다.");
+    } finally {
+        isFetchingQuestion = false;
     }
 }
 
-function appendChatBubble(text, sender) {
+function appendChatBubble(text, sender, intent = null, turn = null) {
     const container = document.getElementById('chat-messages-container');
     const bubble = document.createElement('div');
     bubble.className = `chat-bubble ${sender}`;
-    bubble.textContent = text;
+    
+    if (sender === 'ai') {
+        let html = '';
+        if (turn) {
+            html += `<div class="chat-bubble-turn"><i class="fa-solid fa-comments"></i> 꼬리 질문 ${turn} / 1</div>`;
+        }
+        if (intent) {
+            html += `<div class="chat-bubble-intent"><i class="fa-solid fa-bullseye"></i> <strong>분석 타겟:</strong> ${intent}</div>`;
+        }
+        html += `<div class="chat-bubble-text">${text}</div>`;
+        bubble.innerHTML = html;
+    } else {
+        bubble.textContent = text;
+    }
+    
     container.appendChild(bubble);
     container.scrollTop = container.scrollHeight;
 }
@@ -827,12 +877,12 @@ async function loadSessionDetails(sessionId) {
             // Draw Chat Logs from DB
             if (data.interview_logs && data.interview_logs.length > 0) {
                 data.interview_logs.forEach(log => {
-                    if (log.ai_question) appendChatBubble(log.ai_question, 'ai');
+                    if (log.ai_question) appendChatBubble(log.ai_question, 'ai', log.ai_intent, log.turn_num);
                     if (log.user_answer) appendChatBubble(log.user_answer, 'user');
                 });
                 
                 const answeredLogs = data.interview_logs.filter(l => l.user_answer);
-                if (answeredLogs.length === 3) {
+                if (answeredLogs.length === 1) {
                     steps[2].classList.add('completed');
                 }
             }
@@ -841,8 +891,8 @@ async function loadSessionDetails(sessionId) {
             renderDraft(q.draft_content);
             
             // Render review feedback
-            if (q.refined_draft && q.feedback_report) {
-                renderReviewResult(q.refined_draft, {
+            if (q.refined_content && q.feedback_report) {
+                renderReviewResult(q.refined_content, {
                     scores: JSON.parse(q.feedback_report).scores || { readability: 85, logic: 85, job_fit: 85 },
                     comments: JSON.parse(q.feedback_report).comments || ["가독성이 뛰어납니다."]
                 });
@@ -910,11 +960,11 @@ async function loadSessionDetails(sessionId) {
         if (targetStep === 3) {
             const logs = data.interview_logs || [];
             const answeredCount = logs.filter(l => l.user_answer).length;
-            if (answeredCount < 3) {
+            if (answeredCount < 1) {
                 fetchNextInterviewQuestion();
             } else {
-                appendChatBubble("면접 꼬리 질문 3단계가 모두 마쳤습니다! 아래 버튼을 누르거나 다음 단계로 가 자소서를 완성해 보세요.", 'ai');
-                document.getElementById('chat-progress-text').textContent = "가이드 면접 종료 (3/3 답변)";
+                appendChatBubble("면접 꼬리 질문 1단계가 모두 마쳤습니다! 아래 버튼을 누르거나 다음 단계로 가 자소서를 완성해 보세요.", 'ai');
+                document.getElementById('chat-progress-text').textContent = "가이드 면접 종료 (1/1 답변)";
                 document.getElementById('chat-answer-input').disabled = true;
                 document.getElementById('btn-submit-answer').disabled = true;
             }
