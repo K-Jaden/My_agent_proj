@@ -466,6 +466,17 @@ def api_step3_draft(question_id: int):
         except Exception:
             insights = q_data["company_insights"]
             
+    # Format logs for agent
+    formatted_turns = []
+    for log in logs:
+        formatted_turns.append({
+            "turn": log["turn_num"],
+            "q": log["ai_question"],
+            "hint": log.get("ai_hint"),
+            "intent": log.get("ai_intent"),
+            "a": log.get("user_answer") or ""
+        })
+
     # Run Agent node to compile final draft (augmented with GoYong24 job description details)
     session_dict = {
         "company": q_data["company"],
@@ -478,7 +489,7 @@ def api_step3_draft(question_id: int):
         "job_description": get_augmented_job_description(session_dict),
         "question_text": q_data["question_text"],
         "max_chars": q_data["max_chars"],
-        "interview_turns": logs,
+        "interview_turns": formatted_turns,
         "logs": []
     }
     

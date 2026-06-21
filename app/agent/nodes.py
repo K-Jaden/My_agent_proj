@@ -180,10 +180,11 @@ def generate_final_draft_node(state: AgentState) -> dict:
     
     # Format QA logs
     qa_lines = []
-    for turn in sorted(interview_turns, key=lambda x: x.get("turn", 0)):
-        q = turn.get("q", "")
-        a = turn.get("a", "")
-        qa_lines.append(f"[질문 {turn.get('turn')}]: {q}\n[답변]: {a}")
+    for turn in sorted(interview_turns, key=lambda x: x.get("turn") or x.get("turn_num", 0)):
+        q = turn.get("q") or turn.get("ai_question", "")
+        a = turn.get("a") or turn.get("user_answer", "")
+        turn_idx = turn.get("turn") or turn.get("turn_num", 0)
+        qa_lines.append(f"[질문 {turn_idx}]: {q}\n[답변]: {a}")
     interview_text = "\n\n".join(qa_lines)
     
     try:
